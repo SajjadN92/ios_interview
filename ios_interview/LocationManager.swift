@@ -49,6 +49,10 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         guard CLLocationManager.locationServicesEnabled() else {
             return false
         }
+        
+        if MotionBasedActivityRecognition.isUserStationary() {
+            self.locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers
+        }
 
         var requestResult = false
         if collectionType == .WHEN_IN_USE {
@@ -132,13 +136,13 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         DispatchQueue.main.async {
             switch newAccuracy {
             case .BEST:
-                if self.prevCycleBestLocation == nil {
-                    self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
-                    self.clearCachedLocations()
-
-                } else {
+                if MotionBasedActivityRecognition.isUserStationary() &&
+                    self.prevCycleBestLocation != nil {
                     self.reportPrviousCycleLocations()
                     self.changeLocationAccuracy(newAccuracy: .THREE_KILOMETERS)
+                } else {
+                    self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
+                    self.clearCachedLocations()
                 }
             case .BEST_FOR_NAV:
                 self.locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
